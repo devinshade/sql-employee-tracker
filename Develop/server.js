@@ -236,13 +236,14 @@ function addRole() {
             }
             ]).then(function (answer) {
 
-                connection.query("SELECT * FROM employee WHERE ?", { title: answer.employee_id }, function (err, result) {
+                connection.query("SELECT * FROM employee WHERE ?", { title: answer.role_id
+                 }, function (err, result) {
                     if (err) throw err;
     
                     connection.query("INSERT INTO employee SET ?", {
                         first_name: answer.firstName,
                         last_name: answer.lastName,
-                        employee_id: result[0].id
+                        role_id: result[0].id
                     });
     
                     console.log("\n Role added to database... \n");
