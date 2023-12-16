@@ -144,21 +144,8 @@ async function addRole() {
                     promptQuit();
                 }
             })
-        // connection.query("SELECT * FROM employee WHERE ?", { title: answer.role_id
-        //  }, function (err, result) {
-        //     if (err) throw err;
-
-        //     connection.query("INSERT INTO employee SET ?", {
-        //         first_name: answer.firstName,
-        //         last_name: answer.lastName,
-        //         role_id: result[0].id
-        //     });
-
-        //     console.log("\n Role added to database... \n");
-        // })
-    })
-}
-// )};
+        })
+    }
 
 // adds employee to database
 async function addEmployee() {
