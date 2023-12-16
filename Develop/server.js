@@ -1,6 +1,6 @@
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
-const cTable = require('console.table');
+// const cTable = require('console.table');
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -10,7 +10,7 @@ var connection = mysql.createConnection({
     database: "employee_db"
 });
 
-connection.connect(function (err) { 
+connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
     // runs the app
@@ -33,7 +33,7 @@ function runApp() {
             'Update an employee role',
             'Quit'
         ]
-    
+
     }).then(function (answer) {
 
         switch (answer.startQuestions) {
@@ -67,242 +67,133 @@ function runApp() {
 
 function showAllDepartments() {
 
-    var allDepartmentArray = [];
-
-    var query = "SELECT employee.id, first_name, last_name, title, salary, department_name FROM employee JOIN employee_role ON (employee.role_id = employee_role.id) JOIN department ON (department.id = employee_role.department_id)";
-
-    connection.query(query, function(err, result) {
-        if (err) throw err;
-
-        var departmentArray = [];
-
-        for(var i = 0; i < result.length; ++i) {
-
-            departmentArray = [];
-
-            departmentArray.push(result[i].id);
-            departmentArray.push(result[i].first_name);
-            departmentArray.push(result[i].last_name);
-            departmentArray.push(result[i].title);
-            departmentArray.push(result[i].salary);
-            departmentArray.push(result[i].department_name);
-
-            console.log(departmentArray);
-            allDepartmentArray.push(departmentArray);
-        }
-    }
-)};
+    // var query = "SELECT employee.id, first_name, last_name, title, salary, department_name FROM employee JOIN employee_role ON (employee.role_id = employee_role.id) JOIN department ON (department.id = employee_role.department_id)";
+    var query = "SELECT * FROM department"
+    connection.promise().query(query).then(([response]) => {
+        console.table(response)
+        promptQuit();
+    })
+};
 
 function showAllRoles() {
-
-    var allRolesArray = [];
-
-    var query = "SELECT employee.id, first_name, last_name, title, salary, department_name FROM employee JOIN employee_role ON (employee.role_id = employee_role.id) JOIN department ON (department.id = employee_role.department_id)";
-
-    connection.query(query, function(err, result) {
-        if (err) throw err;
-
-        var roleArray = [];
-
-        for(var i = 0; i < result.length; ++i) {
-
-            roleArray = [];
-
-            roleArray.push(result[i].id);
-            roleArray.push(result[i].first_name);
-            roleArray.push(result[i].last_name);
-            roleArray.push(result[i].title);
-            roleArray.push(result[i].salary);
-            roleArray.push(result[i].department_name);
-
-            // console.log(roleArray);
-            allRolesArray.push(roleArray);
-
-        }
-    }
-)};
+    var query = "SELECT employee_role.title AS Title, employee_role.salary AS Salary, department.department_name AS Department FROM employee_role LEFT JOIN department ON employee_role.id = department.id"
+    connection.promise().query(query).then(([response]) => {
+        console.table(response)
+        promptQuit();
+    })
+}
 
 function showAllEmployees() {
-
-    var allEmployeeArray = [];
-
-    var query = "SELECT employee.id, first_name, last_name, title, salary, department_name FROM employee JOIN employee_role ON (employee.role_id = employee_role.id) JOIN department ON (department.id = employee_role.department_id)";
-
-    connection.query(query, function(err, result) {
-        if (err) throw err;
-
-        var employeeArray = [];
-
-        for(var i = 0; i < result.length; ++i) {
-
-            employeeArray = [];
-
-            employeeArray.push(result[i].id);
-            employeeArray.push(result[i].first_name);
-            employeeArray.push(result[i].last_name);
-            employeeArray.push(result[i].title);
-            employeeArray.push(result[i].salary);
-            employeeArray.push(result[i].department_name);
-
-            // console.log(employeeArray);
-            allEmployeeArray.push(employeeArray);
-        }
-
-        console.log(allEmployeeArray);
-
-        console.log("\n\n\n");
-        console.table(["ID", "First Name", "Last Name", "Role", "Salary", "Department"], allEmployeeArray);
-        console.log("\n\n\n");
-
+    var query = "SELECT CONCAT(employee.first_name + ' ' + employee.last_name) AS Employee, employee_role.title AS Title, employee_role.salary AS Salary FROM employee LEFT JOIN employee_role ON employee.role_id = employee_role.id"
+    connection.promise().query(query).then(([response]) => {
+        console.table(response)
         promptQuit();
     })
 };
 // adds department to database
 function addDepartment() {
 
-    connection.query("SELECT * FROM employee_role", function (err, result) {
-        if (err) throw err;
+    inquirer.prompt([
+        {
+            name: "deptName",
+            type: "input",
+            message: "Enter the department name:"
+        },
+    ]).then(function (answer) {
 
-        inquirer.prompt([
-            {
-                name: "firstName",
-                type: "input",
-                message: "Enter the employee's First Name:"
-            },
-            {
-                name: "lastName",
-                type: "input",
-                message: "Enter the employee's Last Name:"
-            },
-            {
-                name: "roleChoice",
-                type: "rawlist",
-                message: "Enter the employee's role:",
-                choices: function () {
-                    var arrChoices = [];
-
-                    for (var i = 0; i < result.length; ++i) {
-                        arrChoices.push(result[i].title);
-                    }
-
-                    return arrChoices;
-                }
-            }
-        ]).then(function (answer) {
-
-            connection.query("SELECT * FROM employee_role WHERE ?", { title: answer.roleChoice }, function (err, result) {
-                if (err) throw err;
-
-                connection.query("INSERT INTO employee SET ?", {
-                    first_name: answer.firstName,
-                    last_name: answer.lastName,
-                    role_id: result[0].id
-                });
-
-                console.log("\n Department added to database... \n");
-            })
-
-            promptQuit();
+        connection.query("INSERT INTO department SET ?", { department_name: answer.deptName }, function (err, result) {
+            if (err) throw err;
+            console.log("\n Department added to database... \n");
         })
+
+        promptQuit();
     })
 };
 
 // adds role to database
-function addRole() {
-
-    connection.query("SELECT * FROM employee_role", function (err, result) {
-        if (err) throw err;
-
-        inquirer.prompt([
-            {
-                name: "firstName",
-                type: "input",
-                message: "Enter the employee's First Name:"
-            },
-            {
-                name: "lastName",
-                type: "input",
-                message: "Enter the employee's Last Name:"
-            },
-            {
-                name: "salary",
-                type: "input",
-                message: "Enter the salary for the role:"
-            },
-            {
-                name: "department",
-                type: "input",
-                message: "Enter the department for the role:"
-            }
-            ]).then(function (answer) {
-
-                connection.query("SELECT * FROM employee WHERE ?", { title: answer.role_id
-                 }, function (err, result) {
-                    if (err) throw err;
-    
-                    connection.query("INSERT INTO employee SET ?", {
-                        first_name: answer.firstName,
-                        last_name: answer.lastName,
-                        role_id: result[0].id
-                    });
-    
-                    console.log("\n Role added to database... \n");
-                })
-    
-                promptQuit();
+async function addRole() {
+    const [departments] = await connection.promise().query("SELECT * FROM department")
+    const departmentArray = departments.map(department => (
+        { name: department.department_name, value: department.id }
+    ))
+    inquirer.prompt([
+        {
+            name: "title",
+            type: "input",
+            message: "Enter the title of the new role:"
+        },
+        {
+            name: "salary",
+            type: "input",
+            message: "Enter the salary for the role:"
+        },
+        {
+            name: "department",
+            type: "list",
+            choices: departmentArray,
+            message: "Select the department for the role:"
+        }
+    ]).then(function (answer) {
+        console.log(answer)
+        connection.promise().query("INSERT INTO employee_role SET ?", { title: answer.title, salary: answer.salary, department_id: answer.department })
+            .then(([response]) => {
+                if (response.affectedRows > 0) {
+                    showAllRoles()
+                } else {
+                    console.error("Error: Failed to create role")
+                    promptQuit();
+                }
             })
-    }
-    )};
+        // connection.query("SELECT * FROM employee WHERE ?", { title: answer.role_id
+        //  }, function (err, result) {
+        //     if (err) throw err;
+
+        //     connection.query("INSERT INTO employee SET ?", {
+        //         first_name: answer.firstName,
+        //         last_name: answer.lastName,
+        //         role_id: result[0].id
+        //     });
+
+        //     console.log("\n Role added to database... \n");
+        // })
+    })
+}
+// )};
 
 // adds employee to database
-function addEmployee() {
-
-    connection.query("SELECT * FROM employee_role", function (err, result) {
-        if (err) throw err;
-
+async function addEmployee() {
+    const [roles] = await connection.promise().query('SELECT * FROM employee_role')
+    const roleArray = roles.map(({ id, title }) => ({ name:title, value:id }))
+    console.log(roles)
         inquirer.prompt([
             {
-                name: "firstName",
+                name: "first_name",
                 type: "input",
                 message: "Enter the employee's First Name:"
             },
             {
-                name: "lastName",
+                name: "last_name",
                 type: "input",
                 message: "Enter the employee's Last Name:"
             },
             {
-                name: "roleChoice",
-                type: "rawlist",
+                name: "role_id",
+                type: "list",
                 message: "Enter the employee's role:",
-                choices: function () {
-                    var arrChoices = [];
-
-                    for (var i = 0; i < result.length; ++i) {
-                        arrChoices.push(result[i].title);
-                    }
-
-                    return arrChoices;
-                }
+                choices: roleArray
             }
-        ]).then(function (answer) {
-
-            connection.query("SELECT * FROM employee_role WHERE ?", { title: answer.roleChoice }, function (err, result) {
-                if (err) throw err;
-
-                connection.query("INSERT INTO employee SET ?", {
-                    first_name: answer.firstName,
-                    last_name: answer.lastName,
-                    role_id: result[0].id
-                });
-
-                console.log("\n Employee added to database... \n");
+        ]).then(function ({ first_name, last_name, role_id }) {
+            connection.promise().query('INSERT INTO employee SET ?', { first_name, last_name, role_id })
+            .then(([response]) => {
+                if (response.affectedRows > 0) {
+                    showAllEmployees()
+                } else {
+                    console.error("Error: Failed to create employee")
+                    promptQuit();
+                }
             })
-
-            promptQuit();
         })
-    })
-};
+    };
 
 // asks user if they want to quit or keep using the application
 function promptQuit() {
